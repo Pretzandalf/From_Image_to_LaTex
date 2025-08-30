@@ -1,4 +1,5 @@
 import os
+import streamlit as st
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,11 +19,13 @@ class TextDetector:
     def load_image(self, img_path):
         """Загрузка и подготовка изображения"""
 
-
-        if type(img_path) is str:
+        if isinstance(img_path, str):
+            # Загрузка из файла
             image_bgr = cv2.imread(img_path)
         else:
-            image_bgr = img_path
+            # PIL Image в OpenCV
+            image_rgb = np.array(img_path.convert('RGB'))
+            image_bgr = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
 
         self.image = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
         return self.image
@@ -30,7 +33,7 @@ class TextDetector:
     def detect_text(self, img_path, batch_size=1):
         """Детекция текста на изображении"""
         self.load_image(img_path)
-        output = self.model.predict(img_path, batch_size=batch_size)
+        output = self.model.predict(self.image, batch_size=batch_size)
 
         self.detections = {
             'dt_polys': np.array(output[0]['dt_polys']),
@@ -199,8 +202,8 @@ class TextDetector:
             results.append(cropped)
         return results
 
-    def visualize_detections(self, filled=True, alpha=0.5, figsize=(12, 12)):
-        """Визуализация детекций"""
+    def visualize_detections(self, filled=True, alpha=0.5):
+        """Визуализация детекций с отображением в Streamlit"""
         if filled:
             result_image = self.draw_filled_polygons(alpha)
         else:
@@ -213,28 +216,30 @@ class TextDetector:
                 cv2.putText(result_image, f"{score:.2f}", (x, y - 5),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
 
-        plt.figure(figsize=figsize)
-        plt.imshow(result_image)
-        plt.axis("off")
-        plt.show()
+        # Конвертируем BGR в RGB для корректного отображения в Streamlit
+        if len(result_image.shape) == 3 and result_image.shape[2] == 3:
+            result_image_rgb = cv2.cvtColor(result_image, cv2.COLOR_BGR2RGB)
+        else:
+            result_image_rgb = result_image
+
+        st.image(result_image_rgb, caption="Загруженное изображение", use_container_width=True)
 
         return result_image
 
 def main(img_path, threshold_metric = 0.04):
     detector = TextDetector()
 
-    img_path = img_path
     detections = detector.detect_text(img_path)
 
     merged_poly = detector.merge_intersecting_polygons(threshold = threshold_metric)
 
     # Визуализируем с закрашенными областями
-    #result_image = detector.visualize_detections(filled=True, alpha=0.6)
+    detector.visualize_detections(filled=True, alpha=0.6)
 
     crops = detector.extract_polygons()
 
     return crops
 
 # Пример использования
-if __name__ == "__main__":
-    main('/home/pret/Downloads/Pasted image (4).png')
+# if __name__ == "__main__":
+#     main('/home/pret/Downloads/Pasted image (4).png')

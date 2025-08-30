@@ -54,7 +54,7 @@ class Qwen_recognition_model():
         inputs = inputs.to("cuda")
 
         # Inference: Generation of the output
-        generated_ids = self.model.generate(**inputs, max_new_tokens=2048)
+        generated_ids = self.model.generate(**inputs, max_new_tokens=128)
         generated_ids_trimmed = [
             out_ids[len(in_ids) :] for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
         ]
@@ -64,9 +64,9 @@ class Qwen_recognition_model():
 
         return output_text
 
-if __name__ == "__main__":
-    path = "Попробуй максимально точно расписать рукописный текст на русском языке с этого изображения. Обращай внимание на скобки и матрицы. Верни результат."
-    prompt = "/home/pret/PycharmProjects/Img_to_LaTex/Images_testment/crop_text_17.png"
-    model = Qwen_recognition_model()
-    model.initialize_Qwen_model(prompt)
-    print(model.img_to_text(path))
+# if __name__ == "__main__":
+#     path = "Попробуй максимально точно расписать рукописный текст на русском языке с этого изображения. Обращай внимание на скобки и матрицы. Верни результат."
+#     prompt = "/home/pret/PycharmProjects/Img_to_LaTex/Images_testment/crop_text_17.png"
+#     model = Qwen_recognition_model()
+#     model.initialize_Qwen_model(prompt)
+#     print(model.img_to_text(path))
