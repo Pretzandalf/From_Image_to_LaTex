@@ -79,7 +79,7 @@ class TextDetector:
 
         return result_image
 
-    def merge_intersecting_polygons(self, threshold=0.01):
+    def merge_intersecting_polygons(self, threshold=0.04):
         """
         Объединяет полигоны, которые пересекаются (по IoU или просто по геометрии).
 
@@ -107,7 +107,7 @@ class TextDetector:
                         # считаем IoU
                         # inter_area = base_poly.intersection(other).area
                         # union_area = base_poly.union(other).area
-                        # iou = inter_area / union_area if union_area > 0 else 0
+                        # iou = inter_area / union_area if union_area > 0.04 else 0
                         # metric = iou
 
                         area_other = other.area

@@ -20,24 +20,16 @@ def clear_memory():
 
     torch.cuda.synchronize()
 
-#vl промпт
-prompt = "Тебе будет передан конспект максимально точно распиши рукописный текст на русском языке с этого изображения. Пиши только текст на изображении, это очень важно. Обращай внимание на скобки и матрицы. Верни результат."
+# # vl промпт
+VL_model_instruct = "Тебе будет передан конспект максимально точно распиши рукописный текст на русском языке с этого изображения. Пиши только текст на изображении, это очень важно. Обращай внимание на скобки и матрицы. Верни результат."
 
 #базовая обработка
-instruct = r"""
-Ты — ассистент для обработки текстов, полученных из OCR фотографий конспектов по алгебре.
-Всегда возвращай результат в виде корректного LaTeX-кода.
-Требования:
-1) Важно сохрани оригинальный язык, скорее всего это русский;
-2) исправляй ошибки распознавания (например, перепутанные буквы и цифры);
-3) преобразуй все математические выражения в синтаксис LaTeX (используй окружения equation, align или \[ ... \]);
-4) не изменяй структуру документа;
-5) выводи только готовый LaTeX-код без комментариев и пояснений.
-6) не добавляй новых слов от себя и не удаляй исходный текст.
+LLM_first_instruct = r"""
+ы хороший ассистент, твоя задача обрабатывать текст, полученный в результате перевода фотографий конспектов по алгебре в текст. Важно оставить слова на изначальном языке (скорее всего русский язык). Ты должен переводить текст в готовый LaTex формат, а именно сделать структуру и перевести математические формулы в формат LaTex, также редактируй слова, которые неправильно были прочтены из изображения. Верни результат
 """
 
 #финальная обработка
-instruct_form = r"""
+LLM_second_instruct = r"""
 Ты — ассистент для обработки текстов, полученных из OCR фотографий конспектов по алгебре.
 Всегда возвращай результат в виде корректного LaTeX-кода.
 Требования: Тебе нужно исправить ошибки в написании LaTex. Сделай все важные импорты (например русского языка \usepackage[english, russian]{babel}), проверь верность написания формул. Все остальное оставь без изменений. Выведи результат
@@ -45,32 +37,35 @@ instruct_form = r"""
 
 
 def Image_to_text(image_path):
-    clear_memory()
-    #scan_img = Doc_to_scan(image_path)
-    #crops = text_detector(scan_img)
-    crops = text_detector(image_path)
+    with torch.no_grad():
+        clear_memory()
+        #scan_img = Doc_to_scan(image_path)
+        #crops = text_detector(scan_img)
+        crops = text_detector(image_path)
 
-    clear_memory()
-    recognition_model = Qwen_recognition_model()
-    recognition_model.initialize_Qwen_model(prompt)
-    text_lines = [[] for _ in range(len(crops.keys()))]
-    for line_num, line in enumerate(crops.keys()):
-        for indx, block_img in enumerate(crops[line]):
-            text_on_block = recognition_model.img_to_text(block_img)[0]
-            text_lines[line_num].append(text_on_block)
+        clear_memory()
+        recognition_model = Qwen_recognition_model()
+        recognition_model.initialize_Qwen_model(VL_model_instruct)
+        text_lines = [[] for _ in range(len(crops.keys()))]
+        for line_num, line in enumerate(crops.keys()):
+            for indx, block_img in enumerate(crops[line]):
+                text_on_block = recognition_model.img_to_text(block_img)[0]
+                text_lines[line_num].append(text_on_block)
 
-    result = "\n".join("\t".join(row) for row in text_lines)
+        result = "\n".join("\t".join(row) for row in text_lines)
 
-    del recognition_model
-    clear_memory()
+        del recognition_model
+        clear_memory()
 
-    Qwen_final_model = final_model()
-    Qwen_final_model.initialize_Qwen_model()
-    final_text_LaTex = Qwen_final_model.text_inference(result, instruct)
+        Qwen_final_model = final_model()
+        Qwen_final_model.initialize_Qwen_model()
+        final_text_LaTex = Qwen_final_model.text_inference(result, LLM_first_instruct)
+        final_LaTex = Qwen_final_model.text_inference(final_text_LaTex, LLM_second_instruct)
 
-    final_LaTex = Qwen_final_model.text_inference(final_text_LaTex, instruct_form)
+        del Qwen_final_model
+        clear_memory()
 
-    return final_LaTex
+        return final_LaTex
 
 
 #print(Image_to_text("/home/pret/Downloads/Pasted image.png"))
