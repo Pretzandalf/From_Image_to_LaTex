@@ -24,7 +24,7 @@ cd From_Image_to_LaTex
 
 # 3. Run the Streamlit interface
 streamlit run streamlit_.py
-
+```
 
 👉 **Link to paper:** [Paper.pdf](./Article_.pdf)
 ------------------------------------------------------------------------------
@@ -43,7 +43,7 @@ streamlit run streamlit_.py
 
 ```markdown
 ## Инференс
-
+```
 Чтобы запустить проект локально:
 
 ```bash
@@ -55,6 +55,6 @@ cd From_Image_to_LaTex
 
 # 3. Запустите интерфейс Streamlit
 streamlit run streamlit_.py
-
+```
 
 👉 **Ссылка на статью:** [Paper.pdf](./Article_.pdf)
